@@ -20,7 +20,7 @@
         <td>{{post.title}}</td>
         <td>{{post.author}}</td>
         <td>{{post.created}}</td>
-        <td><a href="edit_post/{{post.id}}" class="btn btn-default pull-right">Edit</a></td>
+        <td><a href="edit_post/{{post.id}}" class="btn btn-warning pull-right">Edit</a></td>
         <td>
           <form action="/delete_post/{{post.id}}" method="post">
             <input type="hidden" name="_method" value="DELETE">
