@@ -22,7 +22,7 @@
         <td>{{post.created}}</td>
         <td><a href="edit_post/{{post.id}}" class="btn btn-default pull-right">Edit</a></td>
         <td>
-          <form action="{{url_for('delete_post', id=post.id)}}" method="post">
+          <form action="/delete_post/{{post.id}}" method="post">
             <input type="hidden" name="_method" value="DELETE">
             <input type="submit" value="Delete" class="btn btn-danger">
           </form>
