@@ -24,19 +24,33 @@ def index():
     return render_template("index.html")
 
 
-@app.route('/post', methods=["GET"])
-def blogs():
-    return render_template("posts.html")
+@app.route('/posts', methods=["GET"])
+def posts():
+    cur = mysql.connection.cursor()
+    res = cur.execute("SELECT * FROM blogs")
+    posts = cur.fetchall()
+    cur.close()
+    if res > 0:
+        return render_template("posts.html", posts=posts)
+
+    return render_template("posts.html", msg='No blog posts yet')
 
 
 @app.route('/posts/<id>', methods=["GET"])
-def blog(id):
-    return render_template("post.html", id=id)
+def post(id):
+    cur = mysql.connection.cursor()
+    res = cur.execute("SELECT * FROM blogs WHERE id=%s", (id))
+    post = cur.fetchone()
+    cur.close()
+    if res > 0:
+        return render_template("post.html", post=post)
+
+    return render_template("posts.html", msg='No blog posts yet')
 
 
 class Register(Form):
     name = StringField("Name", [validators.Length(min=1, max=30)])
-    username = StringField("Userame", [validators.Length(min=5, max=30)])
+    username = StringField("Username", [validators.Length(min=5, max=30)])
     password = PasswordField("Password", [
         validators.Length(min=8, max=40), validators.DataRequired(),
         validators.equal_to("confirm", message="Passwords must match")
@@ -116,7 +130,73 @@ def logout():
 @app.route("/dashboard", methods=["GET"])
 @is_logged_in
 def dashboard():
-    return render_template("dashboard.html")
+    cur = mysql.connection.cursor()
+    res = cur.execute("SELECT * FROM blogs WHERE author=%s", (session["username"]))
+    posts = cur.fetchall()
+    cur.close()
+    if res > 0:
+        return render_template("dashboard.html", posts=posts)
+
+    return render_template("dashboard.html", msg="You do not have any blog posts")
+
+
+class addPost(Form):
+    title = StringField("Title", [validators.Length(min=1, max=200)])
+    body = TextAreaField("Body", [validators.Length(min=20), validators.DataRequired()])
+
+
+@app.route("/add_post", methods=["GET", "POST"])
+@is_logged_in
+def add_post():
+    form = addPost(request.form)
+    if request.method == "POST" and form.validate():
+        title = form.title.data
+        body = form.body.data
+
+        cur = mysql.connection.cursor()
+        cur.execute("INSERT INTO blogs(title, author, body) VALUES(%s, %s, %s)", (title, session["username"], body))
+        mysql.connection.commit()
+        cur.close()
+
+        return redirect(url_for("dashboard"))
+    return render_template("add_post.html", form=form)
+
+
+@app.route("/edit_post/<id>", methods=["GET", "POST"])
+@is_logged_in
+def edit_post(id):
+    form = addPost(request.form)
+
+    if request.method == "POST" and form.validate():
+        title = form.title.data
+        body = form.body.data
+
+        cur = mysql.connection.cursor()
+        res = cur.execute("UPDATE blogs SET title=%s, body=%s WHERE id=%s", (title, body, id))
+        mysql.connection.commit()
+        cur.close()
+
+        return redirect(url_for("dashboard"))
+
+    cur = mysql.connection.cursor()
+    res = cur.execute("SELECT * FROM blogs WHERE id=%s", id)
+    post = cur.fetchone()
+    if res > 0:
+        form.title.data = post["title"]
+        form.body.data = post["body"]
+    return render_template("edit_post.html", form=form)
+
+@app.route("/delete_post<id>", methods=["POST"])
+@is_logged_in
+def delete_post(id):
+
+    cur = mysql.connection.cursor()
+    cur.execute("DELETE FROM blogs WHERE id=%s", id)
+    mysql.connection.commit()
+    cur.close()
+
+    flash("Post was successfully deleted", "success")
+    return redirect(url_for("dashboard"))
 
 
 if __name__ == "__main__":

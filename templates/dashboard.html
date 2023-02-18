@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1>Dashboard</h1>
+  <h1>Your posts</h1>
   <h3>Hello, {{session.username}}</h3>
   <a class="btn btn-success" href="/add_post"> Add a blog post</a>
   <hr>
@@ -19,7 +19,7 @@
         <td>{{post.id}}</td>
         <td>{{post.title}}</td>
         <td>{{post.author}}</td>
-        <td>{{post.create_date}}</td>
+        <td>{{post.created}}</td>
         <td><a href="edit_post/{{post.id}}" class="btn btn-default pull-right">Edit</a></td>
         <td>
           <form action="{{url_for('delete_post', id=post.id)}}" method="post">
